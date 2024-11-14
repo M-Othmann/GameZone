@@ -1,5 +1,7 @@
 
 
+using GameZone.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,6 +15,12 @@ options.UseSqlServer(connectionString));
 
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IDevicesService, DevicesService>();
+builder.Services.AddScoped<ICategoriesService, CategoriesService>();
+builder.Services.AddScoped<IGamesService, GamesService>();
+
+
 
 var app = builder.Build();
 

@@ -2,16 +2,25 @@
 
 
 
+using GameZone.Services;
+
 namespace GameZone.Controllers
 {
 
     public class GamesController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly ICategoriesService _categoriesService;
+        private readonly IDevicesService _devicesService;
+        private readonly IGamesService _gamesService;
 
-        public GamesController(AppDbContext context)
+
+        public GamesController(AppDbContext context, ICategoriesService categoriesService, IDevicesService devicesService, IGamesService gamesService)
         {
             _context = context;
+            _categoriesService = categoriesService;
+            _devicesService = devicesService;
+            _gamesService = gamesService;
         }
         public IActionResult Index()
         {
@@ -24,19 +33,38 @@ namespace GameZone.Controllers
 
             CreateGameFromViewModel viewModel = new()
             {
-                Categories = _context.Categories
-                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
-                .OrderBy(c => c.Text)
-                .ToList(),
+                Categories = _categoriesService.GetSelectListItems(),
 
-                Devices = _context.Categories
-                .Select(d => new SelectListItem { Value = d.Id.ToString(), Text = d.Name})
-                .OrderBy(d => d.Text)
-                .ToList()
+                Devices = _devicesService.GetSelectListItems()
 
-                
+
             };
             return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreateGameFromViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.Devices = _devicesService.GetSelectListItems();
+
+                model.Categories = _categoriesService.GetSelectListItems();
+
+                return View(model);
+            }
+
+            //save game in DB
+            await _gamesService.Create(model);
+
+
+
+            //save cover to server
+
+
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
